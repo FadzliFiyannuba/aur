@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nembak — HALOO AURORAA, WILL YOU BE MY GIRLFRIEND????</title>
+  <style>
+    :root{
+      --bg-color: #bb3fad;
+      --overlay: rgba(8,6,10,0.45);
+      --card-grad: linear-gradient(180deg,#0b1220 0%, #bf3f68 100%);
+      --accent: #f47588;
+      --muted: #d6c9d8;
+      --radius: 16px;
+      font-family: Inter, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    html,body{
+      height:100%;
+      margin:0;
+      background-color:var(--bg-color);
+      color:#fff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* background image: default gradient, can be overridden by JS when user uploads foto */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:
+        radial-gradient(1200px 600px at 10% 10%, rgba(255,107,129,0.06), transparent 6%),
+        radial-gradient(900px 500px at 90% 90%, rgba(126,249,179,0.03), transparent 6%),
+        var(--bg-color);
+      background-size:cover;
+      background-position:center;
+      z-index:-3;
+      transition:opacity .4s ease, filter .3s ease;
+    }
+    /* user photo layer */
+    body[data-bg]::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      background-image: var(--user-bg, none);
+      background-size:cover;
+      background-position:center;
+      filter: blur(0px) saturate(1.05) contrast(0.98);
+      opacity:0.92;
+      z-index:-2;
+      transition:opacity .4s ease, filter .3s ease;
+    }
+
+    /* dim overlay for readability */
+    .bg-overlay{
+      position:fixed;
+      inset:0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.28), rgba(0,0,0,0.4));
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    .wrap{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+
+    .card{
+      width:100%;
+      max-width:640px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--radius);
+      padding:24px;
+      box-shadow: 0 20px 50px rgba(2,6,23,0.55);
+      position:relative;
+      overflow:visible;
+      border: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(6px) saturate(1.02);
+    }
+
+    header.controls{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      margin-bottom:8px;
+    }
+    .btn-ghost{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.08);
+      padding:8px 10px;
+      border-radius:10px;
+      color:var(--muted);
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    .top-row{
+      display:flex;
+      align-items:flex-start;
+      gap:18px;
+    }
+
+    .left{
+      flex:1;
+    }
+
+    h1{
+      margin:0 0 8px 0;
+      font-size:28px;
+      line-height:1.05;
+      display:inline-block;
+      transform-origin:center;
+      /* heart-beat animation */
+      animation: heartbeat 2s infinite;
+      text-shadow: 0 6px 18px rgba(0,0,0,0.45);
+    }
+    @keyframes heartbeat{
+      0%{ transform:scale(1); }
+      10%{ transform:scale(1.06); }
+      20%{ transform:scale(1); }
+      60%{ transform:scale(1.03); }
+      100%{ transform:scale(1); }
+    }
+
+    p.lead{
+      margin:0 0 14px 0;
+      color:var(--muted);
+      font-size:15px;
+    }
+
+    .controls-row{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      margin-top:8px;
+    }
+
+    .choices{
+      display:flex;
+      gap:12px;
+      margin-top:18px;
+      align-items:center;
+    }
+
+    .btn{
+      flex:1;
+      padding:14px 18px;
+      border-radius:12px;
+      border:0;
+      font-weight:700;
+      font-size:16px;
+      cursor:pointer;
+      transition:transform .14s ease, box-shadow .14s ease;
+      box-shadow: 0 8px 26px rgba(2,6,23,0.45);
+      user-select:none;
+      position:relative;
+      overflow:visible;
+      background:linear-gradient(90deg,var(--accent), #ff8aa1);
+      color:white;
+    }
+
+    .btn:active{ transform:translateY(1px) scale(.998); }
+
+    .btn.gak{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      color:var(--muted);
+      border: 1px solid rgba(255,255,255,0.06);
+      cursor:default;
+    }
+
+    /* blocker to catch clicks */
+    .btn.gak .blocker{
+      position:absolute;
+      inset:0;
+      pointer-events:auto;
+    }
+
+    /* playful dodge on hover (small lateral move) */
+    .btn.gak:hover{
+      transform: translateX(-10px) translateY(-4px) rotate(-2deg);
+      transition: transform .18s cubic-bezier(.2,.9,.3,1);
+    }
+
+    .hint{
+      margin-top:12px;
+      font-size:13px;
+      color:#f0e6f2;
+      text-align:center;
+    }
+
+    footer.small{ margin-top:14px; text-align:center; color:var(--muted); font-size:13px; }
+
+    /* modal */
+    .modal {
+      position:fixed;
+      inset:0;
+      z-index:60;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(3,6,12,0.45);
+      opacity:0;
+      visibility:hidden;
+      transition:opacity .18s ease, visibility .18s;
+    }
+    .modal.show{ opacity:1; visibility:visible; }
+
+    .dialog{
+      background:linear-gradient(180deg,#071225,#0b1530);
+      padding:22px;
+      border-radius:14px;
+      min-width:300px;
+      box-shadow: 0 22px 60px rgba(2,6,23,0.7);
+      text-align:center;
+      color:#e6f7ff;
+      border:1px solid rgba(255,255,255,0.04);
+      position:relative;
+      overflow:visible;
+    }
+    .dialog h2{ margin:0 0 8px 0; font-size:22px; }
+    .dialog p{ margin:0 0 16px 0; color:#b8d6e8; }
+
+    .close{
+      margin-top:6px;
+      padding:8px 14px;
+      border-radius:10px;
+      border:0;
+      background:rgba(255,255,255,0.04);
+      color:#dceeff;
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    /* floating heart canvas */
+    #heartsCanvas{
+      position:fixed;
+      inset:auto 0 0 0;
+      height:40vh;
+      pointer-events:none;
+      z-index:5;
+    }
+
+    /* mobile tweaks */
+    @media (max-width:520px){
+      .card{ padding:16px; border-radius:12px; }
+      h1{ font-size:22px; }
+      .choices{ flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-overlay" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <div class="card" role="main" aria-labelledby="judul">
+
+      <header class="controls" aria-hidden="false">
+        <!-- upload foto sebagai background -->
+        <label class="btn-ghost" title="Upload foto background" id="uploadLabel">
+          Upload Foto
+          <input id="bgUpload" type="file" accept="image/*" style="display:none" />
+        </label>
+
+        <!-- toggle sound -->
+        <button class="btn-ghost" id="soundToggle" title="Suara konfirmasi: on/off">Suara: On</button>
+
+        <!-- reset background -->
+        <button class="btn-ghost" id="resetBg">Reset BG</button>
+      </header>
+
+      <div class="top-row">
+        <div class="left">
+          <h1 id="judul">HALOO AURORAA, WILL YOU BE MY GIRLFRIEND???? <span aria-hidden="true">💘</span></h1>
+          <p class="lead" id="subtext">HEHEHE</p>
+
+          <div class="controls-row" role="region" aria-label="Kustomisasi">
+            <!-- custom text -->
+            <input id="titleInput" placeholder="Ganti judul (contoh: Halo Aurora...)" style="flex:1;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"/>
+            <input id="subInput" placeholder="Ganti pesan kecil" style="flex:1;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:white"/>
+            <button class="btn-ghost" id="applyText">Apply</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="choices" role="group" aria-label="Pilihan">
+        <button class="btn mau" id="btnMau" aria-describedby="hint">Mau 😍</button>
+
+        <button class="btn gak" aria-disabled="true" id="btnGak" tabindex="-1">
+          Gak 😅
+          <span class="blocker" aria-hidden="true"></span>
+        </button>
+      </div>
+
+      <div class="hint" id="hint">Pilih salah satu jawaban — ingat gunakan dengan bijak ya :)</div>
+
+      <footer class="small">Tekan "Upload Foto" untuk pakai fotomu sebagai background. Kamu bisa ubah teks lalu klik "Apply".</footer>
+    </div>
+  </div>
+
+  <!-- modal + canvas konfeti -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalText">
+      <h2 id="modalTitle">YEYYYYYYY 💖</h2>
+      <p id="modalText">SUDAH RESMII YAAA, LOFFYUUUU SAYANGGKUUU</p>
+      <button class="close" id="closeBtn">Tutup</button>
+      <canvas id="confettiCanvas" width="800" height="360" style="position:absolute; left:0; right:0; bottom:0; pointer-events:none;"></canvas>
+    </div>
+  </div>
+
+  <!-- floating hearts -->
+  <canvas id="heartsCanvas" aria-hidden="true"></canvas>
+
+  <!-- hidden audio -->
+  <audio id="popSound" preload="auto">
+    <source src="data:audio/mpeg;base64,//uQZ..." type="audio/mpeg">
+    <!-- data URI placeholder: jika mau suara nyata, ganti src dengan file mp3 lokal atau URL -->
+  </audio>
+
+  <script>
+    /* ============================
+       Elemen DOM
+       ============================ */
+    const btnMau = document.getElementById('btnMau');
+    const btnGak = document.getElementById('btnGak');
+    const modal = document.getElementById('modal');
+    const closeBtn = document.getElementById('closeBtn');
+    const confettiCanvas = document.getElementById('confettiCanvas');
+    const heartsCanvas = document.getElementById('heartsCanvas');
+    const bgUpload = document.getElementById('bgUpload');
+    const uploadLabel = document.getElementById('uploadLabel');
+    const resetBg = document.getElementById('resetBg');
+    const soundToggle = document.getElementById('soundToggle');
+    const popSound = document.getElementById('popSound');
+    const titleInput = document.getElementById('titleInput');
+    const subInput = document.getElementById('subInput');
+    const applyText = document.getElementById('applyText');
+    const judulEl = document.getElementById('judul');
+    const subtextEl = document.getElementById('subtext');
+    const hint = document.getElementById('hint');
+
+    /* ============================
+       Background upload (FileReader)
+       - saat user pilih foto, simpan sebagai CSS variable dan set attribute data-bg
+       - membuat overlay untuk readability
+       ============================ */
+    bgUpload.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      // hanya image
+      if (!file.type.startsWith('image/')) return alert('Pilih file gambar (jpg/png).');
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = `url("${reader.result}")`;
+        document.documentElement.style.setProperty('--user-bg', url);
+        document.body.setAttribute('data-bg', 'true');
+        hint.textContent = 'Background diatur — bisa di-reset lewat tombol Reset BG.';
+      };
+      reader.readAsDataURL(file);
+    });
+
+    resetBg.addEventListener('click', () => {
+      document.documentElement.style.removeProperty('--user-bg');
+      document.body.removeAttribute('data-bg');
+      hint.textContent = 'Background di-reset ke default.';
+    });
+
+    /* ============================
+       Sound toggle
+       ============================ */
+    let soundOn = true;
+    soundToggle.addEventListener('click', () => {
+      soundOn = !soundOn;
+      soundToggle.textContent = `Suara: ${soundOn ? 'On' : 'Off'}`;
+    });
+
+    /* ============================
+       Custom text apply
+       ============================ */
+    applyText.addEventListener('click', () => {
+      if (titleInput.value.trim()) judulEl.textContent = titleInput.value.trim();
+      if (subInput.value.trim()) subtextEl.textContent = subInput.value.trim();
+      hint.textContent = 'Teks diubah.';
+    });
+
+    /* ============================
+       Tombol 'Gak' non-interaktif
+       - kita tetap tangkap klik dan beri feedback animasi
+       - juga tambahkan kecil "dodge" saat hover (CSS)
+       ============================ */
+    btnGak.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      // shake + tooltip-like hint
+      btnGak.animate([
+        { transform: 'translateX(0) rotate(0deg)' },
+        { transform: 'translateX(8px) rotate(4deg)' },
+        { transform: 'translateX(-6px) rotate(-3deg)' },
+        { transform: 'translateX(0) rotate(0deg)' }
+      ], { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1)' });
+      hint.textContent = 'Ups! Pilihan itu nggak bisa dipilih :3';
+    });
+
+    /* ============================
+       Modal / confetti when 'Mau' clicked
+       ============================ */
+    btnMau.addEventListener('click', () => {
+      showModal();
+      launchConfetti();
+      if (soundOn) try { popSound.currentTime = 0; popSound.play().catch(()=>{}); } catch(e){}
+      btnMau.disabled = true;
+    });
+
+    closeBtn.addEventListener('click', hideModal);
+    function showModal(){
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden','false');
+      closeBtn.focus();
+    }
+    function hideModal(){
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden','true');
+      btnMau.focus();
+    }
+
+    /* ============================
+       Confetti simple (improved)
+       ============================ */
+    function launchConfetti(){
+      const ctx = confettiCanvas.getContext('2d');
+      resizeConfetti();
+      window.addEventListener('resize', resizeConfetti);
+
+      const W = confettiCanvas.width;
+      const H = confettiCanvas.height;
+      const pieces = [];
+      const colors = ['#ff6b81', '#7ef9b3', '#ffd166', '#9ad0f5', '#b58cff', '#ffb3c6'];
+
+      for (let i=0;i<160;i++){
+        pieces.push({
+          x: Math.random()*W,
+          y: Math.random()*H - H,
+          r: (Math.random()*6)+4,
+          c: colors[Math.floor(Math.random()*colors.length)],
+          d: (Math.random()*2)+0.8,
+          tilt: (Math.random()*40)-20,
+          tiltSpeed: (Math.random()*0.6)+0.1,
+          alpha: 1
+        });
+      }
+
+      let t=0;
+      function draw(){
+        ctx.clearRect(0,0,W,H);
+        t++;
+        for (let p of pieces){
+          p.y += 2 + p.d;
+          p.x += Math.sin(t * 0.02) * 1.2;
+          p.tilt += p.tiltSpeed;
+          p.alpha -= 0.0032;
+          if (p.alpha < 0) p.alpha = 0;
+
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.c;
+          ctx.save();
+          ctx.translate(p.x,p.y);
+          ctx.rotate(p.tilt * Math.PI/180);
+          ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.65);
+          ctx.restore();
+        }
+        if (pieces.some(p=>p.alpha>0)) requestAnimationFrame(draw);
+        else ctx.clearRect(0,0,W,H);
+      }
+      draw();
+      function resizeConfetti(){
+        confettiCanvas.width = Math.min(window.innerWidth, 1200);
+        confettiCanvas.height = 360;
+      }
+    }
+
+    /* ============================
+       Floating hearts background (canvas)
+       ============================ */
+    (function heartsFloating(){
+      const c = heartsCanvas;
+      const ctx = c.getContext('2d');
+      let W = c.width = window.innerWidth;
+      let H = c.height = Math.max(window.innerHeight * 0.45, 220);
+      const hearts = [];
+      const colors = ['rgba(255,105,180,0.9)','rgba(255,182,193,0.85)','rgba(255,160,122,0.85)'];
+
+      for (let i=0;i<28;i++){
+        hearts.push({
+          x: Math.random()*W,
+          y: Math.random()*H,
+          s: (Math.random()*0.9)+0.6,
+          c: colors[Math.floor(Math.random()*colors.length)],
+          vy: 0.2 + Math.random()*0.6,
+          angle: Math.random()*Math.PI*2
+        });
+      }
+
+      function draw(){
+        ctx.clearRect(0,0,W,H);
+        for (let h of hearts){
+          h.y -= h.vy;
+          h.angle += 0.02;
+          if (h.y < -40){ h.y = H + 40; h.x = Math.random()*W; }
+          ctx.save();
+          ctx.translate(h.x, h.y);
+          ctx.rotate(Math.sin(h.angle) * 0.25);
+          ctx.scale(h.s, h.s);
+          drawHeart(ctx, 0, 0, 14, h.c);
+          ctx.restore();
+        }
+        requestAnimationFrame(draw);
+      }
+      function drawHeart(ctx, x, y, size, color){
+        ctx.beginPath();
+        const topCurveHeight = size * 0.3;
+        ctx.moveTo(x, y + topCurveHeight);
+        ctx.bezierCurveTo(x, y, x - size/2, y, x - size/2, y + topCurveHeight);
+        ctx.bezierCurveTo(x - size/2, y + (size+topCurveHeight)/2, x, y + (size+topCurveHeight)/2, x, y + size);
+        ctx.bezierCurveTo(x, y + (size+topCurveHeight)/2, x + size/2, y + (size+topCurveHeight)/2, x + size/2, y + topCurveHeight);
+        ctx.bezierCurveTo(x + size/2, y, x, y, x, y + topCurveHeight);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+      window.addEventListener('resize', () => {
+        W = c.width = window.innerWidth;
+        H = c.height = Math.max(window.innerHeight * 0.45, 220);
+      });
+      draw();
+    })();
+
+    /* ============================
+       Accessibility: keyboard support for 'Mau'
+       ============================ */
+    btnMau.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') btnMau.click();
+    });
+
+    /* ============================
+       NOTES:
+       - Untuk mengganti suara: ganti src audio (popSound.src) dengan file mp3 lokal atau URL.
+       - Mengatur background foto lewat tombol "Upload Foto" -> foto tidak di-upload ke server,
+         hanya digunakan di browser lokal (FileReader => dataURL). Jadi aman dan privat.
+       - Tidak mungkin 100% mencegah user yang jago devtools mengubah halaman (client-side),
+         tapi untuk tujuan kejutan/hiburan, ini sudah cukup.
+       ============================ */
+
+    // small UX: autofocus hidden file input when label clicked
+    uploadLabel.addEventListener('click', () => bgUpload.click());
+
+    /* Optional: prefill example text for quick editing */
+    titleInput.value = 'HALOO AURORAA, WILL YOU BE MY GIRLFRIEND????';
+    subInput.value = 'SUDAH RESMII YAAA, LOFFYUUUU SAYANGGKUUU';
+
+    // If you want to provide a real sound, replace popSound.src with an actual URL or add a <source> to <audio>.
+    // For safety here, audio data URI is left as a tiny placeholder; browsers might block autoplay.
+
+  </script>
+</body>
+</html>
